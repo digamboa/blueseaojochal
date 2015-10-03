@@ -2,7 +2,7 @@
 @{
     var description = "%"+Request["product"]+"%";
     var db = Database.Open("digamboa_bluesea");
-    var listOfProductsSQL = "SELECT PK_ItemId, description, price, itemNumber FROM TB_Item WHERE description like @0 OR searchText like @0";
+    var listOfProductsSQL = "SELECT PK_ItemId, description, price FROM TB_Item WHERE description like @0 OR searchText like @0";
     var listOfProducts = db.Query(listOfProductsSQL, description);
     var listOfProductsGrid = new WebGrid(listOfProducts, ajaxUpdateContainerId: "grid", canSort: false, rowsPerPage: 100);
     var service = new cr.fi.bccr.indicadoreseconomicos.wsIndicadoresEconomicos();
@@ -110,22 +110,6 @@
 <div class="section1">
 <h2 class="subtitle">Products</h2>
 <form method="post">
-    <style>
-        .effectfront {
-          border: none;
-          margin: 0 auto;
-          height: 50px;
-        }
-        .effectfront:hover {
-          -webkit-transform: scale(5);
-          -moz-transform: scale(5);
-          -o-transform: scale(5);
-          transform: scale(5);
-          transition: all 0.3s;
-          -webkit-transition: all 0.3s;
-          position: absolute;
-        }
-    </style>
     <div id="grid">
         <input type="text" id="filter" name="product" value="@Request["product"]"/> 
                 <input type="submit" value="Search Product"/>
@@ -133,13 +117,7 @@
             tableStyle : "table",
             alternatingRowStyle : "alternateTable",
             headerStyle : "headerTable",
-            rowStyle : "rowTable",
             columns: listOfProductsGrid.Columns(
-                        listOfProductsGrid.Column(
-                        "",
-                        "",
-                        style: "effectfront",
-                        format: @<img src="@string.Format("images/items/{0}.jpg", @item.itemNumber)" alt="@item.description" onerror="this.src='images/noimage.jpg'" height="50" width="50">),
                         listOfProductsGrid.Column(
                         columnName: "description",
                         header: "Description"),
@@ -221,6 +199,5 @@
 </div>
 </body>
 </html>
-
 
 
