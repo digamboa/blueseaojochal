@@ -1,0 +1,166 @@
+﻿@{
+    var clientEmail = Request["clientEmail"];
+    var clientSubject = Request["clientSubject"];
+    var clientContent = Request["clientContent"];
+    var customerRequest = "<p>Thanks for contacting us!<br>We will view your email as soon as we can."+
+                            "<br>Have a great day!</p>Your message:<br>";
+    var emailFooter =       "<br><p></p><p><i>Blue Sea</i><br><i>We will carry food to your home!</i><br>"+
+                            "Email:<ins>info@blueseaojochal.com</ins><br>"+
+                            "Phone: 8324-3085</p>";
+    var errorMessage = "";
+    if(IsPost){
+        try{
+            WebMail.SmtpServer = "localhost";
+            WebMail.SmtpPort = 25;
+            WebMail.UserName = "info@blueseaojochal.com";
+            WebMail.Password = "BlueMail2015";
+            WebMail.From = "info@blueseaojochal.com";
+
+            WebMail.Send(to: "info@blueseaojochal.com",
+            subject: clientSubject,
+            body: "<p><strong>" + clientEmail + "</strong></p>" + clientContent
+            );
+             WebMail.Send(to: "blueseaojochal@gmail.com",
+            subject: clientSubject,
+            body: "<p><strong>" + clientEmail + "</strong></p>" + clientContent
+            );
+            WebMail.Send(to: clientEmail,
+            subject: "Thanks for contacting BlueSea",
+            body: customerRequest + clientContent + emailFooter
+            );
+
+        }
+        catch(Exception ex) {
+            errorMessage = ex.Message;
+        }
+    }
+}
+
+<style type="text/css">
+.auto-style1 {
+	margin-left: 608px;
+}
+.auto-style2 {
+	margin-top: 16px;
+}
+</style>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Blue Sea</title>
+  <meta name="description" content="The best way to buy in the comfort of your home!">
+  <meta name="keywords" content="keyword1, keyword2, keyword3">
+  <link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div class="main-out">
+<div class="main">
+<div class="page">
+<div class="top">
+<div class="header">
+<div class="header-top">
+<h1><span>Blue Sea</span></h1>
+    <p>Phone: 8324-3085<br><a href="contact.cshtml" >info@blueseaojochal.com</a></p>
+</div>
+<div class="topmenu">
+<ul>
+  <li><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+</div>
+<div class="header-img">
+<div class="content-left">
+<h2 class="slogan" style="width: 460px">Bringing food to your home.</h2>
+</div>
+<div>
+<img src="images/BLUE_SEA.png" alt="logo" height="174" width="210" class="auto-style2" >
+</div>
+
+</div>
+</div>
+<div class="content">
+<div class="content-left">
+<div class="row1">
+<div class="welcome">
+    <h1 class="title">Welcome to <span class="blueTitle">Blue Sea</span></h1>
+    <p><i>Thanks for shopping with us!</i></p>
+</div>
+</div>
+<div class="row2">
+<div class="section1">
+<h2 class="subtitle">Contact</h2>
+<p><strong>Your opinion is important to us!</strong></p>
+<br>
+@if(!IsPost) {
+<form method="post" action="">
+    <p>Please feel free to send us any feedback or doubt!</p><br>
+    
+    <p><strong>Your email:</strong></p>
+    <input name="clientEmail" type="text" style="width: 200px">
+    <br><br>
+    <p><strong>Subject:</strong></p>
+    <input name="clientSubject" type="text" style="width: 370px">
+    <br><br>
+    <p><strong>Comment or question</strong></p>
+    <textarea name="clientContent" cols="50" rows="6"></textarea><br><br>
+    <input type="submit" value="Send">
+</form>
+}
+    else {
+        if(errorMessage == ""){
+<p><strong>Thanks for contacting us!</strong></p>
+<br>
+    }
+    else {
+       <p>The following error was reported:</p>
+            <p><em>@errorMessage</em></p> 
+    }
+    }
+</div>
+</div>
+
+</div>
+<div class="content-right">
+<h2>Main Menu</h2>
+<ul>
+  <li style="border-top: medium none;"><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</div>
+</div>
+</div>
+<div class="bottom">
+<ul>
+  <li style="border-left: medium none;"><a href="home.html">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+<!--DO NOT Remove The Footer Links-->
+<p>&copy; Copyright 2014. Designed by <a target="_blank"
+ href="http://www.htmltemplates.net">html templates</a></p>
+<!--Designed by--><a href="http://www.htmltemplates.net">
+<img src="../images/footnote.gif" class="copyright" alt="htmltemplates.net"></a></div>
+<!--DO NOT Remove The Footer Links-->
+</div>
+</div>
+</div>
+</body>
+</html>
+
+
+
+
+

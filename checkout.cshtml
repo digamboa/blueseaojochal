@@ -1,0 +1,265 @@
+﻿@{
+    if(Request.Cookies["cart"] == null){
+        Response.Redirect("~/");
+    }
+    var cartId = Request.Cookies["cart"].Value.AsInt();
+    var totalPrice = Request["totalPrice"].AsFloat();
+    var clientName = Request["clientName"];
+    var clientAddress = Request["clientAddress"];
+    var clientPhoneNumber = Request["clientPhoneNumber"];
+    var clientEmail = Request["clientEmail"];
+    var additionalInfo = Request["additionalInfo"];
+    var paymentMethod = Request["paymentMethod"];
+    var db = Database.Open("digamboa_bluesea");
+    var command = String.Empty;
+    var errorMessage = "";
+    var result = "";
+    var checkedOut = Request["checkedOut"].AsInt();
+    
+    if(IsPost && checkedOut==1) {
+        
+            Validation.Add("clientName",
+                Validator.Required("Please provide a name")
+                );
+            Validation.Add("clientPhoneNumber",
+                Validator.Range(20000000, 99999999, "Please provide a valid phone number (digits only)")
+                );
+            Validation.Add("clientEmail",
+                Validator.Required("Please provide a valid email address"),
+                Validator.Regex(@"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$",
+                "Invalid format for an email address")
+                );
+            Validation.Add("clientAddress",
+                Validator.Required("Please provide an address")
+                );
+        
+            if(Validation.IsValid()) {
+                command = @"UPDATE TB_Purchase SET totalPrice = @0, clientName = @1, clientAddress = @2, clientPhoneNumber = @3, clientEmail = @4,
+                            additionalInfo = @5, paymentMethod = @6, checkedOut = 1 WHERE PK_PurchaseId = @7";
+                db.Execute(command, totalPrice, clientName, clientAddress, clientPhoneNumber, clientEmail, additionalInfo, paymentMethod, cartId);     
+        
+                command = @"SELECT item.itemNumber, item.description, line.quantity, line.linePrice, line.quantity * line.linePrice AS total, line.PK_PurchaseLineId, purchase.date
+                        FROM TB_Item item INNER JOIN TB_PurchaseLine line
+                        ON line.FK_ItemId = item.PK_ItemId
+                        INNER JOIN TB_Purchase purchase
+                        ON  line.FK_PurchaseId = purchase.PK_PurchaseId
+                        WHERE purchase.PK_PurchaseId = @0";
+                var cartItems = db.Query(command, cartId);
+
+                command = "SELECT date from TB_Purchase WHERE PK_PurchaseId = @0";
+                var date = db.QueryValue(command, cartId).ToString();
+        
+                var emailHeader = "<br><p>Thanks for buying with us! This is your purchase and the information that you provided us.</p>"+
+                                  "<p><strong>Client: </strong>"+clientName+"</p>"+
+                                  "<p><strong>Method of Payment: </strong>"+paymentMethod+"</p>"+
+                                  "<p><strong>Provided Address: </strong>"+clientAddress+"</p>"+
+                                  "<p><strong>Additional Info: </strong>"+additionalInfo+"</p>"+
+                                  "<p><strong>Date of Purchase: </strong>"+date+"</p><br>"+
+                                  "<h1><u>Your Purchase</u></h1>";
+
+                var customerRequest = "<table>" +
+                                        "<tr><th>Item Number</th><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total Price</th><tr>";
+
+                var emailFooter =       "<br><p></p><p><i>Blue Sea</i><br><i>We will carry food to your home!</i><br>"+
+                                    "Email:<ins>info@blueseaojochal.com</ins><br>"+
+                                    "Phone: 8324-3085</p>";
+
+                foreach(var row in cartItems){
+                    customerRequest = customerRequest + "<tr><td align=\"center\">" + row.itemNumber + "</td><td align=\"center\">" + row.description + "</td><td align=\"center\">" + row.quantity + "</td><td align=\"center\">" + row.linePrice + "</td><td align=\"right\">" + row.total + "</td></tr>"; 
+                }
+                customerRequest = customerRequest + "<tfoot><tr><td colspan=\"4\"><strong>Total:</strong></td><td align=\"right\">"+totalPrice+"</td></tr></tfoot></table>";
+        
+                try{
+                    WebMail.SmtpServer = "localhost";
+                    WebMail.SmtpPort = 25;
+                    WebMail.UserName = "info@blueseaojochal.com";
+                    WebMail.Password = "BlueMail2015";
+                    WebMail.From = "info@blueseaojochal.com";
+
+                    WebMail.Send(to: "info@blueseaojochal.com",
+                    subject: "New order from : " + clientName,
+                    body: clientEmail + emailHeader + customerRequest
+                    );
+                    WebMail.Send(to: "blueseaojochal@gmail.com",
+                    subject: "New order from : " + clientName,
+                    body: clientEmail + emailHeader + customerRequest
+                    );
+                    
+                    WebMail.Send(to: clientEmail,
+                    subject: "Your order from BlueSea - " + clientName,
+                    body: emailHeader + customerRequest + emailFooter
+                    );
+                }
+                catch(Exception ex) {
+                    errorMessage = ex.Message;
+                }
+             result += @"<p><strong>An email was send to your account with the purchase information</strong></p><br>
+                        <i>Thanks for buying with us!</i>"; 
+                Response.Cookies["cart"].Expires = DateTime.Now.AddYears(-1);
+            }
+            else{
+                ModelState.AddFormError("There are some errors with your submission");
+
+            }
+        }
+
+    
+}
+
+<style type="text/css">
+.auto-style1 {
+	margin-left: 608px;
+}
+.auto-style2 {
+	margin-top: 16px;
+}
+</style>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Blue Sea</title>
+  <meta name="description" content="The best way to buy in the comfort of your home!">
+  <meta name="keywords" content="keyword1, keyword2, keyword3">
+    <script src="Scripts/jquery-1.7.2.min.js" type="text/javascript"></script>
+  <script src="Scripts/jquery.validate.min.js" type="text/javascript"></script>
+  <script src="Scripts/jquery.validate.unobtrusive.min.js" type="text/javascript"></script>
+  <link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div class="main-out">
+<div class="main">
+<div class="page">
+<div class="top">
+<div class="header">
+<div class="header-top">
+<h1><span>Blue Sea</span></h1>
+    <p>Phone: 8324-3085<br><a href="contact.cshtml" >info@blueseaojochal.com</a></p>
+</div>
+<div class="topmenu">
+<ul>
+  <li><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+</div>
+<div class="header-img">
+<div class="content-left">
+<h2 class="slogan" style="width: 460px">Bringing food to your home.</h2>
+</div>
+<div>
+<img src="images/BLUE_SEA.png" alt="logo" height="174" width="210" class="auto-style2" >
+</div>
+
+</div>
+</div>
+<div class="content">
+<div class="content-left">
+<div class="row1">
+<div class="welcome">
+<h1 class="title">Welcome to <span class="blueTitle">Blue Sea</span></h1>
+<p><i>Thanks for shopping with us!</i></p>
+</div>
+</div>
+<div class="row2">
+<div class="section1">
+<h2 class="subtitle">Checkout</h2>
+<p><strong>Your total:</strong>$@string.Format("{0:f}", @totalPrice)</p>
+<br>
+     <fieldset>       
+    @if(result=="") {      
+            <form method="post" action="">
+                <div class="row">
+                    @Html.ValidationSummary(true)
+                </div>
+                <br>
+                <div class="row">
+                    <p><strong>Choose your method of payment:</strong></p>
+                    <input type="radio" name="paymentMethod" value="Cash">Cash<br>
+                    <input type="radio" name="paymentMethod" value="Credit/Debit Card" checked>Debit/Credit&nbsp;Card<br>
+                    <p><i>Paying in cash gets you a 4.25% discount!</i></p><br><br>
+                </div>
+                <h2 class="personalInfo ">Personal Information</h2>
+                <br>
+                <div class="row">
+                    <label class="label" for="clientName">Full Name:</label>
+                    <span>@Html.TextBox("clientName", Request["clientName"])</span>
+                    @Html.ValidationMessage("clientName")
+                </div>
+                <br>
+                <div class="row">
+                    <label class="label" for="clientPhoneNumber">Phone Number:</label>
+                    <span>@Html.TextBox("clientPhoneNumber", Request["clientPhoneNumber"])</span>
+                    @Html.ValidationMessage("clientPhoneNumber")
+                </div>
+                <br>
+                <div class="row">
+                    <label class="label" for="clientEmail">Email:</label>
+                    <span>@Html.TextBox("clientEmail", Request["clientEmail"])</span>
+                    @Html.ValidationMessage("clientEmail")
+                </div>
+                <br>
+                <div class="row">
+                    <label class="label" for="clientAddress">Address:</label>
+                    <span>@Html.TextBox("clientAddress", Request["clientAddress"])</span>
+                    @Html.ValidationMessage("clientAddress")
+                </div>
+                <br>
+                <div class="row">
+                    <p><strong>Please indicate any aditional information that you may consider necessary</strong></p>
+                    <textarea name="additionalInfo" cols="50" rows="6"></textarea><br><br>
+                    <input type="hidden" name="totalPrice" value="@totalPrice"/>
+                    <input type="hidden" name="checkedOut" value="1"/>
+                    <input type="submit" value="Checkout">
+                </div>
+            </form>
+    }
+    else{
+         @Html.Raw(result)
+    }
+    </fieldset>
+</div>
+</div>
+
+</div>
+<div class="content-right">
+<h2>Main Menu</h2>
+<ul>
+  <li style="border-top: medium none;"><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</div>
+</div>
+</div>
+<div class="bottom">
+<ul>
+  <li style="border-left: medium none;"><a href="home.html">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+<!--DO NOT Remove The Footer Links-->
+<p>&copy; Copyright 2014. Designed by <a target="_blank"
+ href="http://www.htmltemplates.net">html templates</a></p>
+<!--Designed by--><a href="http://www.htmltemplates.net">
+<img src="../images/footnote.gif" class="copyright" alt="htmltemplates.net"></a></div>
+<!--DO NOT Remove The Footer Links-->
+</div>
+</div>
+</div>
+</body>
+</html>
+
+
+
+

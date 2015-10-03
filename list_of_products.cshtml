@@ -1,0 +1,153 @@
+﻿@{
+    if(Request.Cookies["cart"] == null){
+        Response.Redirect("~/");
+    }
+
+    var cartId = Request.Cookies["cart"].Value.AsInt();
+    var command = String.Empty;
+    var db = Database.Open("digamboa_bluesea");
+    if(IsPost){
+        command = "DELETE FROM TB_PurchaseLine WHERE PK_PurchaseLineId = @0";
+        db.Execute(command, Request["purchaseLineId"]);
+    }
+    
+    command = @"SELECT item.PK_ItemId, item.description, line.quantity, line.linePrice, line.quantity * line.linePrice AS total, line.PK_PurchaseLineId
+                FROM TB_Item item INNER JOIN TB_PurchaseLine line
+                ON line.FK_ItemId = item.PK_ItemId WHERE line.FK_PurchaseId = @0";
+    var purchase = db.Query(command, cartId);
+    var cartTotal = purchase.Sum(t => (decimal)t.total);
+    var grid = new WebGrid(purchase, canPage: false, canSort:false);
+
+}
+
+<style type="text/css">
+.auto-style1 {
+	margin-left: 608px;
+}
+.auto-style2 {
+	margin-top: 16px;
+}
+</style>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Blue Sea</title>
+  <meta name="description" content="The best way to buy in the comfort of your home!">
+  <meta name="keywords" content="keyword1, keyword2, keyword3">
+  <link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div class="main-out">
+<div class="main">
+<div class="page">
+<div class="top">
+<div class="header" style="width: 950px">
+<div class="header-top">
+<h1><span>Blue Sea</span></h1>
+    <p>Phone: 8324-3085<br><a href="contact.cshtml" >info@blueseaojochal.com</a></p>
+</div>
+<div class="topmenu">
+<ul>
+  <li><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+</div>
+<div class="header-img">
+<div class="content-left">
+<h2 class="slogan" style="width: 460px">Bringing food to your home.</h2>
+</div>
+<div>
+<img src="images/BLUE_SEA.png" alt="logo" height="174" width="210" class="auto-style2" >
+</div>
+</div>
+</div>
+	<div class="content">
+<div class="content-left">
+<div class="row1">
+<div class="welcome">
+<h1 class="title">Welcome to <span class="blueTitle">Blue Sea</span></h1>
+<p><i>Thanks for shopping with us!</i></p>
+</div>
+</div>
+<div class="row2">
+<div class="section1">
+<h2 class="subtitle">Your list of products</h2>
+<div id="grid">
+    @grid.GetHtml(
+        tableStyle : "table",
+        alternatingRowStyle : "alternateTable",
+        headerStyle : "headerTable",
+        columns: grid.Columns(
+                    grid.Column(
+                    columnName: "description",
+                    header: "Description"),
+                 grid.Column(
+                    columnName: "quantity",
+                    header: "Quantity"),
+                grid.Column(
+                    "linePrice",
+                    "Unit Price"),
+                grid.Column(
+                    "total",
+                    "Total Price"),
+                grid.Column("", format: @<form method="post">
+                                <input type="hidden" value="@item.PK_PurchaseLineId" name="purchaseLineId" />
+                                <input type="submit" value="Remove" />
+                                </form>)
+        )
+     )
+</div>
+    <p>&nbsp;</p>
+    <strong>Total</strong>
+    <strong>$@cartTotal.ToString("f")</strong>
+<p>&nbsp;</p>
+<form method="post" action="checkout.cshtml">
+    <input type="hidden" name="totalPrice" value="@cartTotal"/>
+    <input type="hidden" name="checkedOut" value="0"/>
+<input type="submit" value="Order">
+</form>
+</div>
+
+</div>
+</div>
+<div class="content-right">
+<h2>Main Menu</h2>
+<ul>
+  <li style="border-top: medium none;"><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</div>
+	</div>
+</div>
+<div class="bottom">
+<ul>
+  <li style="border-left: medium none;"><a href="home.cshtml">Home</a></li>
+  <li><a href="about.cshtml">About&nbsp;Us</a></li>
+  <li><a href="contact.cshtml">Contact</a></li>
+  <li><a href="list_of_products.cshtml">My&nbsp;List</a></li>
+
+</ul>
+<!--DO NOT Remove The Footer Links-->
+<p>&copy; Copyright 2014. Designed by <a target="_blank"
+ href="http://www.htmltemplates.net">html templates</a></p>
+<!--Designed by--><a href="http://www.htmltemplates.net">
+<img src="../../images/footnote.gif" class="copyright" alt="htmltemplates.net"></a></div>
+<!--DO NOT Remove The Footer Links-->
+</div>
+</div>
+</div>
+</body>
+</html>
+
+
