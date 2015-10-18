@@ -11,7 +11,7 @@
         db.Execute(command, Request["purchaseLineId"]);
     }
     
-    command = @"SELECT item.PK_ItemId, item.description, line.quantity, line.linePrice, line.quantity * line.linePrice AS total, line.PK_PurchaseLineId
+    command = @"SELECT item.PK_ItemId, item.description, item.itemNumber, line.quantity, line.linePrice, line.quantity * line.linePrice AS total, line.PK_PurchaseLineId
                 FROM TB_Item item INNER JOIN TB_PurchaseLine line
                 ON line.FK_ItemId = item.PK_ItemId WHERE line.FK_PurchaseId = @0";
     var purchase = db.Query(command, cartId);

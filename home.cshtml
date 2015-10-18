@@ -1,9 +1,18 @@
 ﻿@using System.Xml.Linq;
 @{
+    
+    Page.Title = "BlueSea";
+
     var description = "%"+Request["product"]+"%";
+    var categoryFilter = "%"+UrlData[0]+"%";
     var db = Database.Open("digamboa_bluesea");
+    var listOfCategoriesSQL = "SELECT FK_DepartmentId, departmentName from TB_Department";
+    var listOfCategories = db.Query(listOfCategoriesSQL);
     var listOfProductsSQL = "SELECT PK_ItemId, description, price, itemNumber FROM TB_Item WHERE description like @0 OR searchText like @0";
-    var listOfProducts = db.Query(listOfProductsSQL, description);
+    if(!categoryFilter.IsEmpty()) {
+        listOfProductsSQL = "SELECT PK_ItemId, description, price, itemNumber FROM TB_Item WHERE (description like @0 OR searchText like @0) AND department like @1";
+    }
+    var listOfProducts = db.Query(listOfProductsSQL, description, categoryFilter);
     var listOfProductsGrid = new WebGrid(listOfProducts, ajaxUpdateContainerId: "grid", canSort: false, rowsPerPage: 100);
     var service = new cr.fi.bccr.indicadoreseconomicos.wsIndicadoresEconomicos();
     var result = service.ObtenerIndicadoresEconomicosXML("317", DateTime.Now.ToString("dd/MM/yyyy"), DateTime.Now.ToString("dd/MM/yyyy"), "BlueSea", "S");
@@ -50,177 +59,118 @@
     }
 }
 
-<style type="text/css">
-.auto-style1 {
-	margin-left: 608px;
-}
-.auto-style2 {
-	margin-top: 16px;
-}
-</style>
 
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Blue Sea</title>
-  <meta name="description" content="The best way to buy in the comfort of your home!">
-  <meta name="keywords" content="keyword1, keyword2, keyword3">
-  <link href="css/style.css" rel="stylesheet" type="text/css">
-  <script type="text/javascript" src="@Href("~/Scripts/jquery-1.4.4.min.js")"></script>
 
-</head>
-<body>
-<div class="main-out">
-<div class="main">
-<div class="page">
-<div class="top">
-<div class="header" style="width: 950px">
-<div class="header-top">
-<h1><span class="title">Blue Sea</span></h1>
-    <p>Phone: 8324-3085<br><a href="contact.cshtml" >info@blueseaojochal.com</a></p>
-</div>
-<div class="topmenu">
-<ul>
-  <li><a href="home.cshtml">Home</a></li>
-  <li><a href="about.cshtml">About&nbsp;Us</a></li>
-  <li><a href="contact.cshtml">Contact</a></li>
-  <li><a href="list_of_products.cshtml">My&nbsp;List (@totalItems)</a></li>
+<div class="content">
+    <div class="content-left">
+        <div class="row1">
+            <div class="welcome">
+                <h1 class="title">Welcome to <span class="blueTitle">Blue Sea</span></h1>
+                <p><i>Thanks for shopping with us!</i><br>When you are ready to checkout, please go to your list of products to proceed</p>
+            </div>
+        </div>
+        <div class="row2">
+            <div class="section1">
+                <h2 class="subtitle">Products</h2>
+                <form method="post">
+                    <style>
+                        .effectfront {
+                            border: none;
+                            margin: 0 auto;
+                            height: 50px;
+                        }
+                        .effectfront:hover {
+                            -webkit-transform: scale(5);
+                            -moz-transform: scale(5);
+                            -o-transform: scale(5);
+                            transform: scale(5);
+                            transition: all 0.3s;
+                            -webkit-transition: all 0.3s;
+                            position: absolute;
+                        }
+                    </style>
+                    <div id="grid">
+                        <input type="text" id="filter" name="product" value="@Request["product"]"/> 
+                        <input type="submit" value="Search Product"/>
+                        @listOfProductsGrid.GetHtml(
+                            tableStyle : "table",
+                            alternatingRowStyle : "alternateTable",
+                            headerStyle : "headerTable",
+                            rowStyle : "rowTable",
+                            columns: listOfProductsGrid.Columns(
+                                        listOfProductsGrid.Column(
+                                        "",
+                                        "",
+                                        style: "effectfront",
+                                        format: @<img src="@Href("~/images/items/"+@item.itemNumber+".jpg")" alt="@item.description" onerror="this.src='images/noimage.jpg'" height="50" width="50">),
+                                        listOfProductsGrid.Column(
+                                        columnName: "description",
+                                        header: "Description"),
+                                     listOfProductsGrid.Column(
+                                        columnName: "price",
+                                        header: "Price",
+                                        format: @<text>$@string.Format("{0:f}", (@item.price / @exchangeFloat)*@charge)</text>),
+                                    listOfProductsGrid.Column(
+                                        "",
+                                        "Quantity",
+                                        format: @<form method="post" action="" id="place_order">
+                                                    <select name="orderQty" >
+                                                            <option value="0">0</option>
+                                                            <option value="1">1</option>
+                                                            <option value="2">2</option>
+                                                            <option value="3">3</option>
+                                                            <option value="4">4</option>
+                                                            <option value="5">5</option>
+                                                            <option value="6">6</option>
+                                                            <option value="7">7</option>
+                                                            <option value="8">8</option>
+                                                            <option value="9">9</option>
+                                                            <option value="10">10</option>
+                                                        </select>
+                                                    <input type="hidden" value="@item.PK_ItemId" name="productId" />
+                                                    <input type="hidden" value="@string.Format("{0:f}", (@item.price / @exchangeFloat)*@charge)" name="price"/>
+                                                    <input type="submit" value="Add to cart" />
+                                                    </form>)
+                            )
+                         )
 
-</ul>
-</div>
-<div class="header-img">
-<div class="content-left">
-<h2 class="slogan" style="width: 460px">Bringing food to your home.</h2>
-</div>
-<div>
-<img src="images/BLUE_SEA.png" alt="logo" height="174" width="210" class="auto-style2" >
-</div>
-</div>
-</div>
-	<div class="content">
-<div class="content-left">
-<div class="row1">
-<div class="welcome">
-<h1 class="title">Welcome to <span class="blueTitle">Blue Sea</span></h1>
-<p><i>Thanks for shopping with us!</i><br>When you are ready to checkout, please go to your list of products to proceed</p>
-</div>
-</div>
-<div class="row2">
-<div class="section1">
-<h2 class="subtitle">Products</h2>
-<form method="post">
-    <style>
-        .effectfront {
-          border: none;
-          margin: 0 auto;
-          height: 50px;
-        }
-        .effectfront:hover {
-          -webkit-transform: scale(5);
-          -moz-transform: scale(5);
-          -o-transform: scale(5);
-          transform: scale(5);
-          transition: all 0.3s;
-          -webkit-transition: all 0.3s;
-          position: absolute;
-        }
-    </style>
-    <div id="grid">
-        <input type="text" id="filter" name="product" value="@Request["product"]"/> 
-                <input type="submit" value="Search Product"/>
-        @listOfProductsGrid.GetHtml(
-            tableStyle : "table",
-            alternatingRowStyle : "alternateTable",
-            headerStyle : "headerTable",
-            rowStyle : "rowTable",
-            columns: listOfProductsGrid.Columns(
-                        listOfProductsGrid.Column(
-                        "",
-                        "",
-                        style: "effectfront",
-                        format: @<img src="@string.Format("images/items/{0}.jpg", @item.itemNumber)" alt="@item.description" onerror="this.src='images/noimage.jpg'" height="50" width="50">),
-                        listOfProductsGrid.Column(
-                        columnName: "description",
-                        header: "Description"),
-                     listOfProductsGrid.Column(
-                        columnName: "price",
-                        header: "Price",
-                        format: @<text>$@string.Format("{0:f}", (@item.price / @exchangeFloat)*@charge)</text>),
-                    listOfProductsGrid.Column(
-                        "",
-                        "Quantity",
-                        format: @<form method="post" action="" id="place_order">
-                                    <select name="orderQty" >
-                                            <option value="0">0</option>
-                                            <option value="1">1</option>
-                                            <option value="2">2</option>
-                                            <option value="3">3</option>
-                                            <option value="4">4</option>
-                                            <option value="5">5</option>
-                                            <option value="6">6</option>
-                                            <option value="7">7</option>
-                                            <option value="8">8</option>
-                                            <option value="9">9</option>
-                                            <option value="10">10</option>
-                                        </select>
-                                    <input type="hidden" value="@item.PK_ItemId" name="productId" />
-                                    <input type="hidden" value="@string.Format("{0:f}", (@item.price / @exchangeFloat)*@charge)" name="price"/>
-                                    <input type="submit" value="Add to cart" />
-                                    </form>)
-            )
-         )
+                    </div>
+                </form>
+                @section script{
+                <script type="text/javascript">
+                   $(function(){
+                        $('th a, tfoot a').live('click', function() {
+                            $('form').attr('action', $(this).attr('href', '#product')).submit();
+                            return false;
+                        });
+                    });
+                </script>
+                }
+            </div>
 
+        </div>
     </div>
-</form>
-@section script{
-<script type="text/javascript">
-   $(function(){
-        $('th a, tfoot a').live('click', function() {
-            $('form').attr('action', $(this).attr('href')).submit();
-            return false;
-        });
-    });
-</script>
-}
+    <div class="content-right">
+        <h2>Main Menu</h2>
+        <ul>
+            <li style="border-top: medium none;"><a href="~/home">Home</a></li>
+            <li><a href="~/about">About&nbsp;Us</a></li>
+            <li><a href="contact.cshtml">Contact</a></li>
+            <li><a href="list_of_products.cshtml">My&nbsp;List (@totalItems)</a></li>
+        </ul>
+        <h2>Categories</h2>
+        <ul>
+            @foreach(var category in listOfCategories) {
+                <li><a href="~/home/@category.FK_DepartmentId">@category.departmentName</a></li>
+            }
+        </ul>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+    </div>
 </div>
 
-</div>
-</div>
-<div class="content-right">
-<h2>Main Menu</h2>
-<ul>
-  <li style="border-top: medium none;"><a href="home.cshtml">Home</a></li>
-  <li><a href="about.cshtml">About&nbsp;Us</a></li>
-  <li><a href="contact.cshtml">Contact</a></li>
-  <li><a href="list_of_products.cshtml">My&nbsp;List (@totalItems)</a></li>
 
-</ul>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-</div>
-	</div>
-</div>
-<div class="bottom">
-<ul>
-  <li style="border-left: medium none;"><a href="home.cshtml">Home</a></li>
-  <li><a href="about.cshtml">About&nbsp;Us</a></li>
-  <li><a href="contact.cshtml">Contact</a></li>
-  <li><a href="list_of_products.cshtml">My&nbsp;List (@totalItems)</a></li>
-
-</ul>
-<!--DO NOT Remove The Footer Links-->
-<p>&copy; Copyright 2014. Designed by <a target="_blank"
- href="http://www.htmltemplates.net">html templates</a></p>
-<!--Designed by--><a href="http://www.htmltemplates.net">
-<img src="../images/footnote.gif" class="copyright" alt="htmltemplates.net"></a></div>
-<!--DO NOT Remove The Footer Links-->
-</div>
-</div>
-</div>
-</body>
-</html>
 
 
 
