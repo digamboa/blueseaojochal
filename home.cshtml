@@ -102,7 +102,7 @@
                                         "",
                                         "",
                                         style: "effectfront",
-                                        format: @<img src="@Href("~/images/items/"+@item.itemNumber+".jpg")" alt="@item.description" onerror="this.src='images/noimage.jpg'" height="50" width="50">),
+                                        format: @<img src="@Href("~/images/items/"+@item.itemNumber+".jpg")" alt="@item.description" onerror="imgError(this);" height="50" width="50">),
                                         listOfProductsGrid.Column(
                                         columnName: "description",
                                         header: "Description"),
@@ -138,12 +138,17 @@
                 </form>
                 @section script{
                 <script type="text/javascript">
-                   $(function(){
-                        $('th a, tfoot a').live('click', function() {
+                    $(function () {
+                        $('th a, tfoot a').live('click', function () {
                             $('form').attr('action', $(this).attr('href', '#product')).submit();
                             return false;
                         });
                     });
+                    function imgError(image) {
+                        image.onerror = "";
+                        image.src = "@Href("~/images/noimage.jpg")";
+                        return true;
+                    }
                 </script>
                 }
             </div>
@@ -155,8 +160,8 @@
         <ul>
             <li style="border-top: medium none;"><a href="~/home">Home</a></li>
             <li><a href="~/about">About&nbsp;Us</a></li>
-            <li><a href="contact.cshtml">Contact</a></li>
-            <li><a href="list_of_products.cshtml">My&nbsp;List (@totalItems)</a></li>
+            <li><a href="~/contact">Contact</a></li>
+            <li><a href="~/list_of_products">My&nbsp;List (@totalItems)</a></li>
         </ul>
         <h2>Categories</h2>
         <ul>
